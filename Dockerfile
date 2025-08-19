@@ -1,25 +1,14 @@
-FROM public.ecr.aws/docker/library/node:18 AS builder
+# Use the official NGINX image as base
+FROM nginx:latest
 
-WORKDIR /usr/src/app
+# Copy custom configuration (optional)
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# Install dependencies
-COPY package*.json ./
-COPY tsconfig*.json ./
-RUN npm install --quiet
+# Copy static website files (optional)
+COPY ./html /usr/share/nginx/html
 
-# Copy source code and build
-COPY . .
-RUN npm run build
+# Expose port 80
+EXPOSE 80
 
-
-# ---- Runtime Stage ----
-FROM public.ecr.aws/docker/library/node:18-slim
-
-WORKDIR /usr/src/app
-
-# Only copy built code + node_modules
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app/dist ./dist
-COPY package*.json ./
-
-CMD ["npm", "run", "start:dev"]
+# Start NGINX
+CMD ["nginx", "-g", "daemon off;"]
